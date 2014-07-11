@@ -1,195 +1,195 @@
-    local LONGUEUR = 4
-    local NBROWS = 4
-    local NBSTEPS = 3
-    local TORCHES = 11
-     
-    local SLOTCARBU = 1
-    local SLOTTORCHES = 2
-    local SLOTBLOC = 3
-     
-    write("profondeur ? ")
-    LONGUEUR = tonumber(read())
-    write("nb lignes ? ")
-    NBROWS = tonumber(read())
-    write("nb etages ? ")
-    NBSTEPS = tonumber(read())
-     
-    -- retour a la base si inventaire plein,
-    -- vide inventaire puis retourne travailler
-    function retourBase(parcouru,nbLignes,nbStep)
-            -- sauvegarde coordonnees
-            local saveTravel = parcouru     -- Save profondeur
-            local travel = parcouru -- Calcul profondeur
-            local saveRow = nbLignes        -- Save ligne
-            local currentRow = nbLignes     -- Calcul ligne
-            local saveStep = nbStep         -- Save etage
-            local currentStep = nbStep      -- Calcul etage
-            -- retour d�83�A9but de ligne
-            turtle.down()
-            turtle.turnRight()
-            turtle.turnRight()
-            while travel > 1 do
-                    while not turtle.forward() do turtle.dig() end
-                    travel = travel - 1
-            end
-            turtle.up()
-            while not turtle.forward() do turtle.dig() end
-            travel = travel - 1
-            -- retour d�83�A9but d'�83�A9tage
-            turtle.turnLeft()
-            while currentRow > 1 do
-                    while not turtle.forward() do turtle.dig() end
-                    while not turtle.forward() do turtle.dig() end
-                    while not turtle.forward() do turtle.dig() end
-                    currentRow = currentRow - 1
-            end
-            turtle.turnRight()
-            -- retour point de d�83�A9part
-            while currentStep > 1 do
-                    turtle.turnLeft()
-                    while not turtle.forward() do turtle.dig() end
-                    turtle.turnRight()
-                    while not turtle.down() do turtle.digDown() end
-                    while not turtle.down() do turtle.digDown() end
-                    while not turtle.down() do turtle.digDown() end
-                    currentStep = currentStep - 1
-            end
-            -- vidage inventaire
-            for i=16,(SLOTBLOC+1),-1 do
-                    turtle.select(i)
-                    turtle.dropDown()
-            end
-            -- retour �83�A9tage
-            turtle.turnRight()
-            turtle.turnRight()
-            while currentStep < saveStep do
-                    while not turtle.up() do turtle.digUp() end
-                    while not turtle.up() do turtle.digUp() end
-                    while not turtle.up() do turtle.digUp() end
-                    turtle.turnLeft()
-                    while not turtle.forward() do turtle.dig() end
-                    turtle.turnRight()
-                    currentStep = currentStep + 1
-            end
-            -- retour ligne
-            turtle.turnLeft()
-            while currentRow < saveRow do
-                    while not turtle.forward() do turtle.dig() end
-                    while not turtle.forward() do turtle.dig() end
-                    while not turtle.forward() do turtle.dig() end
-                    currentRow = currentRow + 1
-            end
-            turtle.turnRight()
-            -- retour boulot
-            while not turtle.forward() do turtle.dig() end
-            travel = travel + 1
-            turtle.down()
-            while travel < saveTravel  do
-                    while not turtle.forward() do turtle.dig() end
-                    travel = travel + 1
-            end
-            while not turtle.up() do turtle.digUp() end
-    end
-     
-    -- Fonction creusant un tunnel de 2x1
-    -- reviens au point de depart a 90 degres pres
-    function tunnel(currentRow,currentStep)
-            print("### Debut de la ligne "..currentRow.." sur "..NBROWS)
-            local parcouru = 0
-            local lastTorche = TORCHES - 3
-            turtle.select(1)
-            while parcouru < LONGUEUR do
-                    if turtle.getFuelLevel() < 100 then turtle.select(SLOTCARBU) turtle.refuel(1) end
-                    while not turtle.forward() do turtle.dig() end
-                    turtle.digDown()
-                    parcouru = parcouru + 1
-                    lastTorche = lastTorche + 1
-                    if lastTorche == TORCHES or ((lastTorche >= 5) and (parcouru == LONGUEUR)) then
-                            turtle.turnRight()
-                            turtle.turnRight()
-                            turtle.select(SLOTTORCHES)
-                            turtle.place()
-                            turtle.turnRight()
-                            turtle.turnRight()
-                            lastTorche = 0
-                    end
-                    if turtle.getItemCount(16) > 0 then
-                            retourBase(parcouru,currentRow,currentStep)
-                    end
-            end
-            turtle.down()
-            turtle.turnRight()
-            turtle.turnRight()
-            while parcouru > 1 do
-                    if not turtle.detectDown() then
-                            turtle.select(SLOTBLOC)
-                            turtle.placeDown()
-                    end
-                    while not turtle.forward() do turtle.dig() end
-                    parcouru = parcouru - 1
-            end
-            turtle.up()
-            while not turtle.forward() do turtle.dig() end
-    end
-     
-    function mine1step(currentStep)
-            print("# Debut de l'etage "..currentStep.." sur "..NBSTEPS)
-            local nbLignes = 1
-            tunnel(nbLignes,currentStep)
-            while nbLignes < NBROWS do
-                    turtle.turnRight()
-                    while not turtle.forward() do turtle.dig() end
-                    while not turtle.forward() do turtle.dig() end
-                    while not turtle.forward() do turtle.dig() end
-                    turtle.turnRight()
-                    nbLignes = nbLignes + 1
-                    tunnel(nbLignes,currentStep)
-            end
-            turtle.turnLeft()
-            while nbLignes > 1 do
-                    while not turtle.forward() do turtle.dig() end
-                    while not turtle.forward() do turtle.dig() end
-                    while not turtle.forward() do turtle.dig() end
-                    nbLignes = nbLignes - 1
-            end
-            turtle.turnRight()
-    end
-     
-    function allmine()
-            local nbStep = 1
-                    mine1step(nbStep)
-            while nbStep < NBSTEPS do
-                    while not turtle.up() do turtle.digUp() end
-                    while not turtle.up() do turtle.digUp() end
-                    while not turtle.up() do turtle.digUp() end
-                    turtle.turnRight()
-                    while not turtle.forward() do turtle.dig() end
-                    turtle.turnRight()
-                    nbStep = nbStep + 1
-                    mine1step(nbStep)
-            end
-            while nbStep > 1 do
-                    turtle.turnLeft()
-                    while not turtle.forward() do turtle.dig() end
-                    turtle.turnRight()
-                    while not turtle.down() do turtle.digDown() end
-                    while not turtle.down() do turtle.digDown() sleep(1) end
-                    while not turtle.down() do turtle.digDown() end
-                    nbStep = nbStep - 1
-            end
-            turtle.turnRight()
-            turtle.turnRight()
-    end
-     
-     
-     
-    local torchNeed = 2 + ((LONGUEUR * NBROWS * NBSTEPS) - (LONGUEUR * NBROWS * NBSTEPS) % TORCHES) / TORCHES
-    local fuelNeed = 2 + ((LONGUEUR * 2 * NBROWS * NBSTEPS) - (LONGUEUR * 2 * NBROWS * NBSTEPS) % 80) / 80
-    print("mettez au moins "..fuelNeed.." charbons dans le slot "..SLOTCARBU)
-    print("mettez au moins "..torchNeed.." torches dans le slot "..SLOTTORCHES)
-    print("puis appuyez sur Entree...")
-    read()
-     
-    allmine()
+local LONGUEUR = 4
+local NBROWS = 4
+local NBSTEPS = 3
+local TORCHES = 11
+ 
+local SLOTCARBU = 1
+local SLOTTORCHES = 2
+local SLOTBLOC = 3
+ 
+write("profondeur ? ")
+LONGUEUR = tonumber(read())
+write("nb lignes ? ")
+NBROWS = tonumber(read())
+write("nb etages ? ")
+NBSTEPS = tonumber(read())
+ 
+-- retour a la base si inventaire plein,
+-- vide inventaire puis retourne travailler
+function retourBase(parcouru,nbLignes,nbStep)
+		-- sauvegarde coordonnees
+		local saveTravel = parcouru     -- Save profondeur
+		local travel = parcouru -- Calcul profondeur
+		local saveRow = nbLignes        -- Save ligne
+		local currentRow = nbLignes     -- Calcul ligne
+		local saveStep = nbStep         -- Save etage
+		local currentStep = nbStep      -- Calcul etage
+		-- retour d�83�A9but de ligne
+		turtle.down()
+		turtle.turnRight()
+		turtle.turnRight()
+		while travel > 1 do
+				while not turtle.forward() do turtle.dig() end
+				travel = travel - 1
+		end
+		turtle.up()
+		while not turtle.forward() do turtle.dig() end
+		travel = travel - 1
+		-- retour d�83�A9but d'�83�A9tage
+		turtle.turnLeft()
+		while currentRow > 1 do
+				while not turtle.forward() do turtle.dig() end
+				while not turtle.forward() do turtle.dig() end
+				while not turtle.forward() do turtle.dig() end
+				currentRow = currentRow - 1
+		end
+		turtle.turnRight()
+		-- retour point de d�83�A9part
+		while currentStep > 1 do
+				turtle.turnLeft()
+				while not turtle.forward() do turtle.dig() end
+				turtle.turnRight()
+				while not turtle.down() do turtle.digDown() end
+				while not turtle.down() do turtle.digDown() end
+				while not turtle.down() do turtle.digDown() end
+				currentStep = currentStep - 1
+		end
+		-- vidage inventaire
+		for i=16,(SLOTBLOC+1),-1 do
+				turtle.select(i)
+				turtle.dropDown()
+		end
+		-- retour �83�A9tage
+		turtle.turnRight()
+		turtle.turnRight()
+		while currentStep < saveStep do
+				while not turtle.up() do turtle.digUp() end
+				while not turtle.up() do turtle.digUp() end
+				while not turtle.up() do turtle.digUp() end
+				turtle.turnLeft()
+				while not turtle.forward() do turtle.dig() end
+				turtle.turnRight()
+				currentStep = currentStep + 1
+		end
+		-- retour ligne
+		turtle.turnLeft()
+		while currentRow < saveRow do
+				while not turtle.forward() do turtle.dig() end
+				while not turtle.forward() do turtle.dig() end
+				while not turtle.forward() do turtle.dig() end
+				currentRow = currentRow + 1
+		end
+		turtle.turnRight()
+		-- retour boulot
+		while not turtle.forward() do turtle.dig() end
+		travel = travel + 1
+		turtle.down()
+		while travel < saveTravel  do
+				while not turtle.forward() do turtle.dig() end
+				travel = travel + 1
+		end
+		while not turtle.up() do turtle.digUp() end
+end
+ 
+-- Fonction creusant un tunnel de 2x1
+-- reviens au point de depart a 90 degres pres
+function tunnel(currentRow,currentStep)
+		print("### Debut de la ligne "..currentRow.." sur "..NBROWS)
+		local parcouru = 0
+		local lastTorche = TORCHES - 3
+		turtle.select(1)
+		while parcouru < LONGUEUR do
+				if turtle.getFuelLevel() < 100 then turtle.select(SLOTCARBU) turtle.refuel(1) end
+				while not turtle.forward() do turtle.dig() end
+				turtle.digDown()
+				parcouru = parcouru + 1
+				lastTorche = lastTorche + 1
+				if lastTorche == TORCHES or ((lastTorche >= 5) and (parcouru == LONGUEUR)) then
+						turtle.turnRight()
+						turtle.turnRight()
+						turtle.select(SLOTTORCHES)
+						turtle.place()
+						turtle.turnRight()
+						turtle.turnRight()
+						lastTorche = 0
+				end
+				if turtle.getItemCount(16) > 0 then
+						retourBase(parcouru,currentRow,currentStep)
+				end
+		end
+		turtle.down()
+		turtle.turnRight()
+		turtle.turnRight()
+		while parcouru > 1 do
+				if not turtle.detectDown() then
+						turtle.select(SLOTBLOC)
+						turtle.placeDown()
+				end
+				while not turtle.forward() do turtle.dig() end
+				parcouru = parcouru - 1
+		end
+		turtle.up()
+		while not turtle.forward() do turtle.dig() end
+end
+ 
+function mine1step(currentStep)
+		print("# Debut de l'etage "..currentStep.." sur "..NBSTEPS)
+		local nbLignes = 1
+		tunnel(nbLignes,currentStep)
+		while nbLignes < NBROWS do
+				turtle.turnRight()
+				while not turtle.forward() do turtle.dig() end
+				while not turtle.forward() do turtle.dig() end
+				while not turtle.forward() do turtle.dig() end
+				turtle.turnRight()
+				nbLignes = nbLignes + 1
+				tunnel(nbLignes,currentStep)
+		end
+		turtle.turnLeft()
+		while nbLignes > 1 do
+				while not turtle.forward() do turtle.dig() end
+				while not turtle.forward() do turtle.dig() end
+				while not turtle.forward() do turtle.dig() end
+				nbLignes = nbLignes - 1
+		end
+		turtle.turnRight()
+end
+ 
+function allmine()
+		local nbStep = 1
+				mine1step(nbStep)
+		while nbStep < NBSTEPS do
+				while not turtle.up() do turtle.digUp() end
+				while not turtle.up() do turtle.digUp() end
+				while not turtle.up() do turtle.digUp() end
+				turtle.turnRight()
+				while not turtle.forward() do turtle.dig() end
+				turtle.turnRight()
+				nbStep = nbStep + 1
+				mine1step(nbStep)
+		end
+		while nbStep > 1 do
+				turtle.turnLeft()
+				while not turtle.forward() do turtle.dig() end
+				turtle.turnRight()
+				while not turtle.down() do turtle.digDown() end
+				while not turtle.down() do turtle.digDown() sleep(1) end
+				while not turtle.down() do turtle.digDown() end
+				nbStep = nbStep - 1
+		end
+		turtle.turnRight()
+		turtle.turnRight()
+end
+ 
+ 
+ 
+local torchNeed = 2 + ((LONGUEUR * NBROWS * NBSTEPS) - (LONGUEUR * NBROWS * NBSTEPS) % TORCHES) / TORCHES
+local fuelNeed = 2 + ((LONGUEUR * 2 * NBROWS * NBSTEPS) - (LONGUEUR * 2 * NBROWS * NBSTEPS) % 80) / 80
+print("mettez au moins "..fuelNeed.." charbons dans le slot "..SLOTCARBU)
+print("mettez au moins "..torchNeed.." torches dans le slot "..SLOTTORCHES)
+print("puis appuyez sur Entree...")
+read()
+ 
+allmine()
 
 
